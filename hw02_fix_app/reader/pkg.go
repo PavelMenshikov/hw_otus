@@ -1,30 +1,39 @@
 package reader
 
-import	"encoding/json"
-import	"fmt"
-import	"io"
-import	"os"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 
-import	"github.com/fixme_my_friend/hw02_fix_app/types"
-
+	"github.com/fixme_my_friend/hw02_fix_app/types"
+)
 
 func ReadJSON(filePath string, limit int) ([]types.Employee, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		fmt.Printf("Error: %v", err)
+		fmt.Printf("Путь к файлу указан неверно: %v\n", err)
+		return nil, err
 	}
-
-	byte, err := io.ReadAll(f)
+	defer f.Close()
+	data, err := io.ReadAll(f)
 	if err != nil {
-		fmt.Printf("Error: %v", err)
-		return nil, nil
+		fmt.Printf("Ошибка чтения файла: %v\n", err)
+		return nil, err
 	}
 
-	var data []types.Employee
+	// var data []types.Employee
 
-	err = json.Unmarshal(bytes, &data)
+	// err = json.Unmarshal(data, &employeeData)
 
-	res := data
+	// res := data
 
-	return res, nil
+	// return res, nil
+	var employees []types.Employee
+	err = json.Unmarshal(data, &employees)
+	if err != nil {
+		fmt.Printf("Ошибка парсинга JSON: %v\n", err)
+		return nil, err
+	}
+	return employees, nil
 }
