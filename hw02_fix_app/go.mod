@@ -1,3 +1,3 @@
-module github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app
+module github.com/PavelMenshikov/hw_otus/pull/1
 
 go 1.20

@@ -2,8 +2,6 @@ package types
 
 import (
 	"fmt"
-
-	"github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app/types"
 )
 
 type Employee struct {

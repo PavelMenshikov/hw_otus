@@ -3,7 +3,7 @@ package printer
 import (
 	"fmt"
 
-	"github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app/printer"
+	"github.com/PavelMenshikov/hw_otus/pull/1/types"
 )
 
 //func PrintStaff(staff []types.Employee) {
@@ -18,7 +18,7 @@ import (
 func PrintStaff(staff []types.Employee) {
 	if len(staff) == 0 {
 		fmt.Println("Список сотрудников пуст.")
-		return
+
 	}
 	var str string
 	for _, employee := range staff {

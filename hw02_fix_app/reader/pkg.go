@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app/reader"
 )
 
 func ReadJSON(filePath string, limit int) ([]types.Employee, error) {
