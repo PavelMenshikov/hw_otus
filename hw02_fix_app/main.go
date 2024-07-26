@@ -3,37 +3,27 @@ package main
 import (
 	"fmt"
 
-	"github.com/fixme_my_friend/hw02_fix_app/printer"
-	"github.com/fixme_my_friend/hw02_fix_app/reader"
-	"github.com/fixme_my_friend/hw02_fix_app/types"
+	"github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app/printer"
+	"github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app/reader"
 )
 
 func main() {
-	var path string = "data.json"
-	var staff []types.Employee
-	staff, _ = reader.ReadJSON(path, -1)
+	var path string
+	fmt.Printf("Введите путь к файлу JSON:")
+	fmt.Scanln(&path)
 
-	for {
-		fmt.Println("Введите команду: ")
-		fmt.Println("1 - Вывести список сотрудников")
-		fmt.Println("2 - Выполнить другую команду")
-		fmt.Println("0 - Выход")
-
-		var command int
-		fmt.Scanln(&command)
-
-		switch command {
-		case 1:
-			for _, employee := range staff {
-				printer.PrintStaff(employee)
-			}
-		case 2:
-
-		case 0:
-			fmt.Println("До свидания!")
-			return // Выход из программы
-		default:
-			fmt.Println("Неверная команда.")
-		}
+	if path == "" {
+		path = "data.json"
 	}
+
+	staff, err := reader.ReadJSON(path, -1)
+	if err != nil {
+		fmt.Printf("Ошибка при чтении данных: %v\n", err)
+		return
+	}
+	fmt.Println(err)
+
+	printer.PrintStaff(staff)
+	fmt.Println("Нажмите Enter для выхода...")
+	fmt.Scanln()
 }
