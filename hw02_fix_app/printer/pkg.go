@@ -6,7 +6,7 @@ import (
 	"github.com/PavelMenshikov/hw_otus/pull/1/types"
 )
 
-//func PrintStaff(staff []types.Employee) {
+// func PrintStaff(staff []types.Employee) {
 //	var str string
 //	for i := 0; i < len(staff); i++ {
 //	str += fmt.Sprintf("User ID: %d; Age: %d; Name: %s; Department ID: %d; ",
@@ -18,7 +18,6 @@ import (
 func PrintStaff(staff []types.Employee) {
 	if len(staff) == 0 {
 		fmt.Println("Список сотрудников пуст.")
-
 	}
 	var str string
 	for _, employee := range staff {
