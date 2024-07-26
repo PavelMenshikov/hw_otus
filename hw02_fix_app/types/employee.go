@@ -1,14 +1,18 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/PavelMenshikov/hw_otus/tree/hw02_fix_app/types"
+)
 
 type Employee struct {
-	UserID       int    `json:"userid"`
+	UserID       int    `json:"userId"`
 	Age          int    `json:"age"`
-	FirstName    string `json:"name"`
-	DepartmentID int    `json:"departmentid"`
+	Name         string `json:"name"`
+	DepartmentID int    `json:"departmentId"`
 }
 
 func (e Employee) String() string {
-	return fmt.Sprintf("User ID: %d; Age: %d; Name: %s; Department ID: %d; ", e.UserID, e.Age, e.FirstName, e.DepartmentID)
+	return fmt.Sprintf("User ID: %d; Age: %d; Name: %s; Department ID: %d; ", e.UserID, e.Age, e.Name, e.DepartmentID)
 }
