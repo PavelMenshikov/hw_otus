@@ -1,28 +1,23 @@
 package main
 
-func main() {
-	package main
-
 import (
-  "fmt"
+	"fmt"
 )
 
 func main() {
-  var size int
-  fmt.Printf("Введите размер шахматной доски: ")
-  fmt.Scanln(&size)
+	var size int
+	fmt.Printf("Введите размер шахматной доски: ")
+	fmt.Scanln(&size)
 
-  for i := 0; i < size; i++ {
-    for j := 0; j < size; j++ {
-      if (i+j)%2 == 0 {
-        fmt.Print("#")
-      } else {
-        fmt.Print(" ")
-      }
-    }
-    fmt.Println()
-  }
-  
-}
+	for i := 0; i < size; i++ {
+		for j := 0; j < size; j++ {
+			if (i+j)%2 == 0 {
+				fmt.Print("#")
+			} else {
+				fmt.Print(" ")
+			}
+		}
+		fmt.Println()
+	}
 
 }
