@@ -67,23 +67,26 @@ const (
 	ByRate
 )
 
-type compareFunc func(*Book, *Book) bool
-
 type Comparator struct {
-	compareFunc compareFunc
+	comparisonField ComparisonField
 }
 
-func NewComparator(compareFunc compareFunc) *Comparator {
-	return &Comparator{compareFunc: compareFunc}
+func NewComparator(comparisonField ComparisonField) *Comparator {
+	return &Comparator{comparisonField: comparisonField}
 }
 
 func (c *Comparator) Compare(book1, book2 *Book) bool {
-	return c.compareFunc(book1, book2)
+	switch c.comparisonField {
+	case ByYear:
+		return book1.GetYear() > book2.GetYear()
+	case BySize:
+		return book1.GetSize() > book2.GetSize()
+	case ByRate:
+		return book1.GetRate() > book2.GetRate()
+	default:
+		return false
+	}
 }
-
-func compareByYear(b1, b2 *Book) bool { return b1.GetYear() > b2.GetYear() }
-func compareBySize(b1, b2 *Book) bool { return b1.GetSize() > b2.GetSize() }
-func compareByRate(b1, b2 *Book) bool { return b1.GetRate() > b2.GetRate() }
 
 func main() {
 	books := []*Book{
@@ -111,11 +114,11 @@ func main() {
 	var comparator *Comparator
 	switch choice {
 	case 1:
-		comparator = NewComparator(compareByYear)
+		comparator = NewComparator(ByYear)
 	case 2:
-		comparator = NewComparator(compareBySize)
+		comparator = NewComparator(BySize)
 	case 3:
-		comparator = NewComparator(compareByRate)
+		comparator = NewComparator(ByRate)
 	default:
 		fmt.Println("Некорректный выбор")
 		return
