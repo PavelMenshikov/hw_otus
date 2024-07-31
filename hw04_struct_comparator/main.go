@@ -2,7 +2,6 @@ package main
 
 import "fmt"
 
-// Структура, представляющая книгу
 type Book struct {
 	id     int
 	title  string
@@ -12,7 +11,44 @@ type Book struct {
 	rate   float64
 }
 
-// Тип для указания параметра сравнения
+func (b *Book) SetID(id int) {
+	b.id = id
+}
+func (b *Book) SetTitle(title string) {
+	b.title = title
+}
+func (b *Book) SetAuthor(author string) {
+	b.author = author
+}
+func (b *Book) SetYear(year int) {
+	b.year = year
+}
+func (b *Book) SetSize(size int) {
+	b.size = size
+}
+func (b *Book) SetRate(rate float64) {
+	b.rate = rate
+}
+
+func (b *Book) GetID() int {
+	return b.id
+}
+func (b *Book) GetTitle() string {
+	return b.title
+}
+func (b *Book) GetAuthor() string {
+	return b.author
+}
+func (b *Book) GetSize() int {
+	return b.size
+}
+func (b *Book) GetYear() int {
+	return b.year
+}
+func (b *Book) GetRate() float64 {
+	return b.rate
+}
+
 type ComparisonField int
 
 const (
@@ -35,36 +71,54 @@ func (c *Comparator) Compare(book1, book2 *Book) bool {
 	return c.compareFunc(book1, book2)
 }
 
+func compareByYear(b1, b2 *Book) bool { return b1.GetYear() > b2.GetYear() }
+func compareBySize(b1, b2 *Book) bool { return b1.GetSize() > b2.GetSize() }
+func compareByRate(b1, b2 *Book) bool { return b1.GetRate() > b2.GetRate() }
+
 func main() {
-	// Создаем несколько книг с использованием композитных литералов
+
 	books := []*Book{
 		{1, "Сияние", "Стивен Кинг", 1977, 447, 4.8},
 		{2, "Держи марку!", "Терри Пратчетт", 2004, 353, 4.7},
 		{3, "Бойцовский клуб", "Чак Паланик", 1996, 208, 4.6},
 	}
 
-	// Выводим информацию о книгах
-	for _, book := range books {
-		fmt.Printf("ID книги: %d\n", book.id)
-		fmt.Printf("Название книги: %s\n", book.title)
-		fmt.Printf("Автор книги: %s\n", book.author)
-		fmt.Printf("Год издания книги: %d\n", book.year)
-		fmt.Printf("Размер книги: %d\n", book.size)
-		fmt.Printf("Рейтинг книги: %.1f\n", book.rate)
-		fmt.Println()
+	var firstBook, secondBook, choice int
+	fmt.Println("Выберите первую книгу (0, 1 или 2):")
+	fmt.Scan(&firstBook)
+	fmt.Println("Выберите вторую книгу (0, 1 или 2):")
+	fmt.Scan(&secondBook)
+	fmt.Println("Выберите параметры сравнения:")
+	fmt.Println("1. По году")
+	fmt.Println("2. По размеру")
+	fmt.Println("3. По рейтингу")
+	fmt.Print("Введите номер вашего выбора: ")
+	_, err := fmt.Scan(&choice)
+	if err != nil {
+		fmt.Println("Некорректный ввод:", err)
+		return
 	}
 
-	// Сравнение с использованием гибкого компаратора
-	compareBySize := func(b1, b2 *Book) bool { return b1.size > b2.size }
-	sizeComparator := NewComparator(compareBySize)
-	fmt.Println("Сравнение по размеру (book1 vs book3):", sizeComparator.Compare(books[0], books[2]))
+	var comparator *Comparator
+	switch choice {
+	case 1:
+		comparator = NewComparator(compareByYear)
+	case 2:
+		comparator = NewComparator(compareBySize)
+	case 3:
+		comparator = NewComparator(compareByRate)
+	default:
+		fmt.Println("Некорректный выбор")
+		return
+	}
 
-	compareByYear := func(b1, b2 *Book) bool { return b1.year > b2.year }
-	yearComparator := NewComparator(compareByYear)
-	fmt.Println("Сравнение по году (book1 vs book2):", yearComparator.Compare(books[0], books[1]))
-
-	compareByRate := func(b1, b2 *Book) bool { return b1.rate > b2.rate }
-	rateComparator := NewComparator(compareByRate)
-	fmt.Println("Сравнение по рейтингу (book2 vs book3):", rateComparator.Compare(books[1], books[2]))
-
+	fmt.Printf(
+		"Сравнение книги '%s' с книгой '%s':\n", books[firstBook].GetTitle(), books[secondBook].GetTitle())
+	result := comparator.Compare(books[firstBook], books[secondBook])
+	if result {
+		fmt.Println(
+			"Первая книга больше второй по выбранному параметру.")
+	} else {
+		fmt.Println("Первая книга меньше или равна второй по выбранному параметру.")
+	}
 }
