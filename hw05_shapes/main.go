@@ -42,7 +42,7 @@ func (t Triangle) Area() float64 {
 func calculateArea(s any) (float64, error) {
 	shape, ok := s.(Shape)
 	if !ok {
-		return 0, fmt.Errorf("ошибка: переданный объект не реализует интерфейс Shape")
+		return 0, fmt.Errorf("переданный объект не реализует интерфейс Shape")
 	}
 	return shape.Area(), nil
 }
@@ -52,7 +52,7 @@ func readFloat(prompt string) (float64, error) {
 	fmt.Print(prompt)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		return 0, fmt.Errorf("ошибка чтения: %v", err)
+		return 0, fmt.Errorf("ошибка чтения: %w", err)
 	}
 	input = strings.TrimSpace(input)
 	value, err := strconv.ParseFloat(input, 64)
@@ -67,7 +67,7 @@ func readInt(prompt string) (int, error) {
 	fmt.Print(prompt)
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		return 0, fmt.Errorf("ошибка чтения: %v", err)
+		return 0, fmt.Errorf("ошибка чтения: %w", err)
 	}
 	input = strings.TrimSpace(input)
 	value, err := strconv.Atoi(input)
@@ -99,31 +99,34 @@ func main() {
 		var shape any
 		switch choice {
 		case 1:
-			radius, err := readFloat("Введите радиус круга: ")
+			var radius float64
+			radius, err = readFloat("Введите радиус круга: ")
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 			shape = Circle{Radius: radius}
 		case 2:
-			width, err := readFloat("Введите ширину прямоугольника: ")
+			var width, height float64
+			width, err = readFloat("Введите ширину прямоугольника: ")
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			height, err := readFloat("Введите высоту прямоугольника: ")
+			height, err = readFloat("Введите высоту прямоугольника: ")
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
 			shape = Rectangle{Width: width, Height: height}
 		case 3:
-			base, err := readFloat("Введите основание треугольника: ")
+			var base, height float64
+			base, err = readFloat("Введите основание треугольника: ")
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			height, err := readFloat("Введите высоту треугольника: ")
+			height, err = readFloat("Введите высоту треугольника: ")
 			if err != nil {
 				fmt.Println(err)
 				continue
