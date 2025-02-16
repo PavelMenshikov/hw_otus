@@ -1,3 +1,3 @@
-module github.com/fixme_my_friend/hw09_serialize
+module github.com/PavelMenshikov/hw_otus/hw09_serialize
 
 go 1.20
