@@ -47,7 +47,6 @@ func TestCalculateArea_Triangle(t *testing.T) {
 }
 
 func TestCalculateArea_InvalidType(t *testing.T) {
-
 	var notAShape = "это не фигура"
 	_, err := calculateArea(notAShape)
 	if err == nil {
