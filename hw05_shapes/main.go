@@ -1,6 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"math"
+	"os"
+	"strconv"
+	"strings"
+)
 
 type Shape interface {
 	Area() float64
@@ -11,7 +18,7 @@ type Circle struct {
 }
 
 func (c Circle) Area() float64 {
-	return 3.14159 * c.Radius * c.Radius
+	return math.Pi * c.Radius * c.Radius
 }
 
 type Rectangle struct {
@@ -21,7 +28,6 @@ type Rectangle struct {
 
 func (r Rectangle) Area() float64 {
 	return r.Width * r.Height
-
 }
 
 type Triangle struct {
@@ -33,56 +39,106 @@ func (t Triangle) Area() float64 {
 	return 0.5 * t.Base * t.Height
 }
 
-func calculateArea(s Shape) (float64, error) {
-	if s == nil {
-		return 0, fmt.Errorf(
-			"переданный объект не является фигурой.")
+func calculateArea(s any) (float64, error) {
+	shape, ok := s.(Shape)
+	if !ok {
+		return 0, fmt.Errorf("ошибка: переданный объект не реализует интерфейс Shape")
 	}
-	return s.Area(), nil
+	return shape.Area(), nil
+}
+
+func readFloat(prompt string) (float64, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print(prompt)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return 0, fmt.Errorf("ошибка чтения: %v", err)
+	}
+	input = strings.TrimSpace(input)
+	value, err := strconv.ParseFloat(input, 64)
+	if err != nil {
+		return 0, fmt.Errorf("неверный формат числа")
+	}
+	return value, nil
+}
+
+func readInt(prompt string) (int, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print(prompt)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return 0, fmt.Errorf("ошибка чтения: %v", err)
+	}
+	input = strings.TrimSpace(input)
+	value, err := strconv.Atoi(input)
+	if err != nil {
+		return 0, fmt.Errorf("неверный формат числа")
+	}
+	return value, nil
 }
 
 func main() {
-	var choice int
-	fmt.Println("Выберите фигуру для вычисления площади:")
-	fmt.Println("1. Круг")
-	fmt.Println("2. Прямоугольник")
-	fmt.Println("3. Треугольник")
-	fmt.Print("Ваш выбор: ")
-	fmt.Scanf("%d", &choice)
+	for {
+		fmt.Println("\nВыберите фигуру для вычисления площади:")
+		fmt.Println("1. Круг")
+		fmt.Println("2. Прямоугольник")
+		fmt.Println("3. Треугольник")
+		fmt.Println("0. Выход")
 
-	var area float64
-	var err error
-	switch choice {
-	case 1:
-		var radius float64
-		fmt.Print("Введите радиус круга: ")
-		fmt.Scanf("%f", &radius)
-		circle := Circle{Radius: radius}
-		area, err = calculateArea(circle)
-	case 2:
-		var width, height float64
-		fmt.Print("Введите ширину прямоугольника: ")
-		fmt.Scanf("%f", &width)
-		fmt.Print("Введите высоту прямоугольника: ")
-		fmt.Scanf("%f", &height)
-		rectangle := Rectangle{Width: width, Height: height}
-		area, err = calculateArea(rectangle)
-	case 3:
-		var base, height float64
-		fmt.Print("Введите основание треугольника: ")
-		fmt.Scanf("%f", &base)
-		fmt.Print("Введите высоту треугольника: ")
-		fmt.Scanf("%f", &height)
-		triangle := Triangle{Base: base, Height: height}
-		area, err = calculateArea(triangle)
-	default:
-		fmt.Println("Некорректный выбор.")
-		return
-	}
+		choice, err := readInt("Ваш выбор: ")
+		if err != nil {
+			fmt.Println("Ошибка:", err)
+			continue
+		}
 
-	if err != nil {
-		fmt.Println("Ошибка:", err)
-	} else {
-		fmt.Println("Площадь:", area)
+		if choice == 0 {
+			fmt.Println("Выход из программы.")
+			break
+		}
+
+		var shape any
+		switch choice {
+		case 1:
+			radius, err := readFloat("Введите радиус круга: ")
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			shape = Circle{Radius: radius}
+		case 2:
+			width, err := readFloat("Введите ширину прямоугольника: ")
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			height, err := readFloat("Введите высоту прямоугольника: ")
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			shape = Rectangle{Width: width, Height: height}
+		case 3:
+			base, err := readFloat("Введите основание треугольника: ")
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			height, err := readFloat("Введите высоту треугольника: ")
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			shape = Triangle{Base: base, Height: height}
+		default:
+			fmt.Println("Некорректный выбор.")
+			continue
+		}
+
+		area, err := calculateArea(shape)
+		if err != nil {
+			fmt.Println("Ошибка:", err)
+		} else {
+			fmt.Printf("Площадь: %.2f\n", area)
+		}
 	}
 }
