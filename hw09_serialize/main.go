@@ -16,19 +16,17 @@ type Book struct {
 	Sample []byte  `json:"sample" xml:"sample" yaml:"sample"`
 }
 
-// Функция сериализации в JSON
 func ToJSON(book Book) ([]byte, error) {
-	data, err := json.Marshal(book) // ✅ Исправлено
+	data, err := json.Marshal(book)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
 }
 
-// Функция десериализации из JSON
 func FromJSON(data []byte) (Book, error) {
 	var book Book
-	err := json.Unmarshal(data, &book) // ✅ Исправлено
+	err := json.Unmarshal(data, &book)
 	if err != nil {
 		return book, err
 	}
@@ -36,7 +34,7 @@ func FromJSON(data []byte) (Book, error) {
 }
 
 func main() {
-	// Создаём тестовую книгу
+
 	book := Book{
 		ID:     1,
 		Title:  "Грокаем алгоритмы",
@@ -47,16 +45,14 @@ func main() {
 		Sample: []byte("Это фрагмент книги."),
 	}
 
-	// Тестируем сериализацию
-	jsonData, err := ToJSON(book) // ✅ Исправлено
+	jsonData, err := ToJSON(book)
 	if err != nil {
 		fmt.Println("Ошибка сериализации:", err)
 		return
 	}
 	fmt.Println("JSON:", string(jsonData))
 
-	// Тестируем десериализацию
-	newBook, err := FromJSON(jsonData) // ✅ Исправлено
+	newBook, err := FromJSON(jsonData)
 	if err != nil {
 		fmt.Println("Ошибка десериализации:", err)
 		return
