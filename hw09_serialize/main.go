@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Определяем структуру Book
+// Определяем структуру Book.
 type Book struct {
 	ID     int     `json:"id" xml:"id" yaml:"id"`
 	Title  string  `json:"title" xml:"title" yaml:"title"`
@@ -34,7 +34,6 @@ func FromJSON(data []byte) (Book, error) {
 }
 
 func main() {
-
 	book := Book{
 		ID:     1,
 		Title:  "Грокаем алгоритмы",

@@ -6,9 +6,8 @@ import (
 	"testing"
 )
 
-// Тестируем JSON-сериализацию и десериализацию
+// Тестируем JSON-сериализацию и десериализацию.
 func TestJSONSerialization(t *testing.T) {
-
 	originalBook := Book{
 		ID:     1,
 		Title:  "Грокаем алгоритмы",
