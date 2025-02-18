@@ -144,8 +144,10 @@ func BooksFromProto(data []byte) ([]Book, error) {
 	return books, nil
 }
 
-type serializeFunc func([]Book) ([]byte, error)
-type deserializeFunc func([]byte) ([]Book, error)
+type (
+	serializeFunc   func([]Book) ([]byte, error)
+	deserializeFunc func([]byte) ([]Book, error)
+)
 
 func demonstrateFormat(name string, to serializeFunc, from deserializeFunc, books []Book) {
 	data, err := to(books)

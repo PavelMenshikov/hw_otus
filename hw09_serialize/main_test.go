@@ -31,7 +31,10 @@ func init() {
 	gob.Register(Book{})
 }
 
-func testRoundTrip(t *testing.T, formatName string, toFunc func([]Book) ([]byte, error), fromFunc func([]byte) ([]Book, error)) {
+func testRoundTrip(t *testing.T, formatName string, toFunc func([]Book) ([]byte,
+	error), fromFunc func([]byte) ([]Book, error),
+) {
+	t.Helper()
 	data, err := toFunc(sampleBooks)
 	if err != nil {
 		t.Fatalf("%s: serialization error: %v", formatName, err)
