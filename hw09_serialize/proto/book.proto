@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package bookpb;
+
+option go_package = "github.com/PavelMenshikov/hw_otus/hw09_serialize";
+
+// Определение сообщения Book.
+message Book {
+  int32 id = 1;
+  string title = 2;
+  string author = 3;
+  int32 year = 4;
+  int32 size = 5;
+  double rate = 6;
+  bytes sample = 7;
+}
+
+// Сообщение Books является обёрткой для списка книг.
+message Books {
+  repeated Book books = 1;
+}

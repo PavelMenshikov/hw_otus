@@ -1,47 +1,71 @@
 package main
 
 import (
-	"encoding/json"
+	"encoding/gob"
 	"reflect"
 	"testing"
+	// Импортируйте сгенерированный пакет.
 )
 
-// Тестируем JSON-сериализацию и десериализацию.
-func TestJSONSerialization(t *testing.T) {
-	originalBook := Book{
+var sampleBooks = []Book{
+	{
 		ID:     1,
 		Title:  "Грокаем алгоритмы",
 		Author: "Адитья Бхаргава",
 		Year:   2016,
 		Size:   256,
 		Rate:   4.8,
-		Sample: []byte("Это фрагмент книги."),
-	}
+		Sample: []byte("Пример книги."),
+	},
+	{
+		ID:     2,
+		Title:  "Совершенный код",
+		Author: "Стив Макконнелл",
+		Year:   2004,
+		Size:   512,
+		Rate:   4.5,
+		Sample: []byte("Другой пример."),
+	},
+}
 
-	jsonData, err := ToJSON(originalBook)
+func init() {
+	gob.Register(Book{})
+}
+
+func testRoundTrip(t *testing.T, formatName string, toFunc func([]Book) ([]byte, error), fromFunc func([]byte) ([]Book, error)) {
+	data, err := toFunc(sampleBooks)
 	if err != nil {
-		t.Fatalf("Ошибка сериализации: %v", err)
+		t.Fatalf("%s: serialization error: %v", formatName, err)
 	}
-
-	newBook, err := FromJSON(jsonData)
+	newBooks, err := fromFunc(data)
 	if err != nil {
-		t.Fatalf("Ошибка десериализации: %v", err)
+		t.Fatalf("%s: deserialization error: %v", formatName, err)
 	}
+	if !reflect.DeepEqual(sampleBooks, newBooks) {
+		t.Errorf("%s: expected %+v, got %+v", formatName, sampleBooks, newBooks)
+	}
+}
 
-	if !reflect.DeepEqual(originalBook, newBook) {
-		t.Errorf("Ожидали %+v, а получили %+v", originalBook, newBook)
-	}
+func TestJSONSerialization(t *testing.T) {
+	testRoundTrip(t, "JSON", BooksToJSON, BooksFromJSON)
+}
 
-	var parsedData map[string]interface{}
-	err = json.Unmarshal(jsonData, &parsedData)
-	if err != nil {
-		t.Fatalf("Ошибка парсинга JSON: %v", err)
-	}
+func TestXMLSerialization(t *testing.T) {
+	testRoundTrip(t, "XML", BooksToXML, BooksFromXML)
+}
 
-	expectedFields := []string{"id", "title", "author", "year", "size", "rate", "sample"}
-	for _, field := range expectedFields {
-		if _, ok := parsedData[field]; !ok {
-			t.Errorf("Поле %s отсутствует в JSON", field)
-		}
-	}
+func TestYAMLSerialization(t *testing.T) {
+	testRoundTrip(t, "YAML", BooksToYAML, BooksFromYAML)
+}
+
+func TestGOBSerialization(t *testing.T) {
+	testRoundTrip(t, "GOB", BooksToGob, BooksFromGob)
+}
+
+func TestMsgPackSerialization(t *testing.T) {
+	testRoundTrip(t, "MessagePack", BooksToMsgPack, BooksFromMsgPack)
+}
+
+func TestProtoSerialization(t *testing.T) {
+	testRoundTrip(t, "Protobuf", BooksToProto, BooksFromProto)
 }
