@@ -1,6 +1,6 @@
 module github.com/PavelMenshikov/hw_otus/hw09_serialize
 
-go 1.21
+go 1.20
 
 toolchain go1.22.3
 
