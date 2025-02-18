@@ -4,7 +4,6 @@ import (
 	"encoding/gob"
 	"reflect"
 	"testing"
-	// Импортируйте сгенерированный пакет.
 )
 
 var sampleBooks = []Book{

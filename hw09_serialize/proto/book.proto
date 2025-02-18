@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package bookpb;
 
-option go_package = "github.com/PavelMenshikov/hw_otus/hw09_serialize/bookpb";
+option go_package = "github.com/PavelMenshikov/hw_otus/hw09_serialize/proto";
 
 message Book {
   int32 id = 1;

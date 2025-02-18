@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 
-	"github.com/PavelMenshikov/hw_otus/hw09_serialize/bookpb"
+	bookpb "github.com/PavelMenshikov/hw_otus/hw09_serialize/proto"
 )
 
 type Book struct {
