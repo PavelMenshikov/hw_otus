@@ -11,6 +11,8 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
+
+	"github.com/PavelMenshikov/hw_otus/hw09_serialize/bookpb"
 )
 
 type Book struct {
