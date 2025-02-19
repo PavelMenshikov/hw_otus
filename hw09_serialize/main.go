@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"log"
 
+	bookpb "github.com/PavelMenshikov/hw_otus/hw09_serialize/proto"
 	"github.com/vmihailenco/msgpack/v5"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
-
-	bookpb "github.com/PavelMenshikov/hw_otus/hw09_serialize/proto"
 )
 
 type Book struct {
@@ -106,7 +105,7 @@ func BooksFromMsgPack(data []byte) ([]Book, error) {
 }
 
 func BooksToProto(books []Book) ([]byte, error) {
-	var pbBooks []*bookpb.Book
+	pbBooks := make([]*bookpb.Book, 0, len(books))
 	for _, b := range books {
 		pbBooks = append(pbBooks, &bookpb.Book{
 			Id:     int32(b.ID),
@@ -118,7 +117,6 @@ func BooksToProto(books []Book) ([]byte, error) {
 			Sample: b.Sample,
 		})
 	}
-
 	pbWrapper := &bookpb.Books{Books: pbBooks}
 	return proto.Marshal(pbWrapper)
 }
@@ -129,7 +127,7 @@ func BooksFromProto(data []byte) ([]Book, error) {
 	if err != nil {
 		return nil, err
 	}
-	var books []Book
+	books := make([]Book, 0, len(pbWrapper.Books))
 	for _, pbBook := range pbWrapper.Books {
 		books = append(books, Book{
 			ID:     int(pbBook.Id),
