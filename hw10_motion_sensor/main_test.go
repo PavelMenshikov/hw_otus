@@ -1,8 +1,6 @@
 package main
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestSensorDataGenerator(t *testing.T) {
 	dataChan := make(chan int)
