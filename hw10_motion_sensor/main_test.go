@@ -1,19 +1,22 @@
 package main
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestSensorDataGenerator(t *testing.T) {
 	dataChan := make(chan int)
 
-	go sensorDataGenerator(dataChan)
+	go sensorDataGeneratorWithParams(dataChan, 4, 10*time.Millisecond)
 
 	count := 0
 	for range dataChan {
 		count++
 	}
 
-	if count != 120 {
-		t.Errorf("Ожидалось 120 значений, получено %d", count)
+	if count != 4 {
+		t.Errorf("Ожидалось 4 значения, получено %d", count)
 	}
 }
 
@@ -23,22 +26,19 @@ func TestDataProcessor(t *testing.T) {
 
 	go dataProcessor(dataChan, processedChan)
 
-	expectedBatches := [][]int{
+	batches := [][]int{
 		{10, 20, 30, 40, 50, 60, 70, 80, 90, 100},
 		{5, 15, 25, 35, 45, 55, 65, 75, 85, 95},
 	}
 
-	for _, batch := range expectedBatches {
-		sum := 0
+	for _, batch := range batches {
 		for _, v := range batch {
 			dataChan <- v
-			sum += v
 		}
 	}
-
 	close(dataChan)
 
-	for _, batch := range expectedBatches {
+	for _, batch := range batches {
 		sum := 0
 		for _, v := range batch {
 			sum += v
@@ -50,7 +50,6 @@ func TestDataProcessor(t *testing.T) {
 			t.Errorf("Канал processedChan закрылся раньше времени")
 			return
 		}
-
 		if actualAvg != expectedAvg {
 			t.Errorf("Ожидалось %.2f, получено %.2f", expectedAvg, actualAvg)
 		}

@@ -7,14 +7,18 @@ import (
 	"time"
 )
 
-func sensorDataGenerator(dataChan chan<- int) {
-	ticker := time.NewTicker(500 * time.Millisecond)
+func sensorDataGeneratorWithParams(dataChan chan<- int, iterations int, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	for i := 0; i < 120; i++ {
+	for i := 0; i < iterations; i++ {
 		dataChan <- rand.Intn(100)
 		<-ticker.C
 	}
 	close(dataChan)
+}
+
+func sensorDataGenerator(dataChan chan<- int) {
+	sensorDataGeneratorWithParams(dataChan, 120, 500*time.Millisecond)
 }
 
 func dataProcessor(dataChan <-chan int, processedChan chan<- float64) {
@@ -34,9 +38,7 @@ func dataProcessor(dataChan <-chan int, processedChan chan<- float64) {
 }
 
 func main() {
-
 	rand.Seed(time.Now().UnixNano())
-
 	sensorChan := make(chan int)
 	processedChan := make(chan float64)
 
