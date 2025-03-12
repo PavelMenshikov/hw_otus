@@ -39,7 +39,6 @@ func (wp *WorkerPool) Counter() int {
 }
 
 func main() {
-
 	pool := NewWorkerPool()
 	pool.Run(10, 100)
 	fmt.Println("Final counter:", pool.Counter())
