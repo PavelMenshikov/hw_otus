@@ -1,20 +1,34 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"log"
+	"math/big"
 	"sync"
 	"time"
 )
 
-func sensorDataGenerator(dataChan chan<- int) {
-	ticker := time.NewTicker(500 * time.Millisecond)
+func secureRandomInt(max int) int {
+	n, err := rand.Int(rand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		log.Fatalf("Ошибка генерации случайного числа: %v", err)
+	}
+	return int(n.Int64())
+}
+
+func sensorDataGeneratorWithParams(dataChan chan<- int, iterations int, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	for i := 0; i < 120; i++ {
-		dataChan <- rand.Intn(100)
+	for i := 0; i < iterations; i++ {
+		dataChan <- secureRandomInt(100)
 		<-ticker.C
 	}
 	close(dataChan)
+}
+
+func sensorDataGenerator(dataChan chan<- int) {
+	sensorDataGeneratorWithParams(dataChan, 120, 500*time.Millisecond)
 }
 
 func dataProcessor(dataChan <-chan int, processedChan chan<- float64) {
@@ -34,9 +48,6 @@ func dataProcessor(dataChan <-chan int, processedChan chan<- float64) {
 }
 
 func main() {
-	//nolint:gosec
-	rand.Seed(time.Now().UnixNano())
-
 	sensorChan := make(chan int)
 	processedChan := make(chan float64)
 
