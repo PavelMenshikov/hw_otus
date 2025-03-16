@@ -1,0 +1,14 @@
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+    skip-generated: true
+      
+linters:
+  enable:
+    - gci
+    - gofumpt
+    - govet
+    - staticcheck
+    - vet
