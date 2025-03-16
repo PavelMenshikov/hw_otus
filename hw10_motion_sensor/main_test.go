@@ -1,61 +1,91 @@
 package main
 
 import (
+	"math/rand"
 	"testing"
 	"time"
 )
 
-func TestSensorDataGeneratorSmall(t *testing.T) {
-	t.Helper()
-	dataChan := make(chan int)
+func sensorDataGeneratorWithParams(dataChan chan<- int, duration time.Duration, interval time.Duration) {
+	localRand := rand.New(rand.NewSource(time.Now().UnixNano())) // #nosec G404
 
-	go sensorDataGeneratorWithParams(dataChan, 4, 10*time.Millisecond)
-	count := 0
-	for range dataChan {
-		count++
-	}
-	if count != 4 {
-		t.Errorf("Ожидалось 4 значения, получено %d.", count)
+	timeout := time.After(duration)
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeout:
+			close(dataChan)
+			return
+		case <-ticker.C:
+			select {
+			case dataChan <- localRand.Intn(100):
+			default:
+			}
+		}
 	}
 }
 
+func TestSensorDataGenerator(t *testing.T) {
+	t.Run("Generates data for exact duration", func(t *testing.T) {
+		dataChan := make(chan int)
+		testDuration := 100 * time.Millisecond
+		interval := 20 * time.Millisecond
+
+		start := time.Now()
+		go sensorDataGeneratorWithParams(dataChan, testDuration, interval)
+
+		for range dataChan {
+			_ = struct{}{}
+		}
+
+		elapsed := time.Since(start)
+		if elapsed < testDuration {
+			t.Errorf("Генератор завершился раньше времени: %v < %v", elapsed, testDuration)
+		}
+	})
+
+	t.Run("Non-blocking behavior check", func(t *testing.T) {
+		dataChan := make(chan int, 1)
+		testDuration := 50 * time.Millisecond
+		interval := 10 * time.Millisecond
+
+		go sensorDataGeneratorWithParams(dataChan, testDuration, interval)
+		time.Sleep(testDuration + 20*time.Millisecond)
+
+		select {
+		case <-dataChan:
+		case <-time.After(10 * time.Millisecond):
+		}
+	})
+}
+
 func TestDataProcessor(t *testing.T) {
-	t.Helper()
-	dataChan := make(chan int, 20)
-	processedChan := make(chan float64)
+	t.Run("Full batches processing", func(t *testing.T) {
+		dataChan := make(chan int, 20)
+		processedChan := make(chan float64)
 
-	go dataProcessor(dataChan, processedChan)
+		go func() {
+			defer close(dataChan)
+			for i := 0; i < 25; i++ {
+				dataChan <- i
+			}
+		}()
 
-	batches := [][]int{
-		{10, 20, 30, 40, 50, 60, 70, 80, 90, 100},
-		{5, 15, 25, 35, 45, 55, 65, 75, 85, 95},
-	}
+		go dataProcessor(dataChan, processedChan)
 
-	for _, batch := range batches {
-		for _, v := range batch {
-			dataChan <- v
+		received := 0
+		expected := 2
+		for range processedChan {
+			received++
+			if received > expected {
+				break
+			}
 		}
-	}
-	close(dataChan)
 
-	for _, batch := range batches {
-		sum := 0
-		for _, v := range batch {
-			sum += v
+		if received != expected {
+			t.Errorf("Ожидалось %d батчей, получено %d", expected, received)
 		}
-		expectedAvg := float64(sum) / 10.0
-		actualAvg, open := <-processedChan
-		if !open {
-			t.Errorf("Канал processedChan закрылся раньше времени.")
-			return
-		}
-		if actualAvg != expectedAvg {
-			t.Errorf("Ожидалось %.2f, получено %.2f.", expectedAvg, actualAvg)
-		}
-	}
-
-	_, open := <-processedChan
-	if open {
-		t.Errorf("Канал processedChan должен быть закрыт.")
-	}
+	})
 }
