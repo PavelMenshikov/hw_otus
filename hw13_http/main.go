@@ -21,7 +21,8 @@ func main() {
 
 	switch *mode {
 	case "server":
-		server.RunServer(*addr, *port)
+		go server.RunServer(*addr, *port)
+		select {} // Блокируем выполнение, чтобы сервер не завершался
 	case "client":
 		if *url == "" {
 			log.Fatal("Необходимо указать URL для клиента")
@@ -29,12 +30,12 @@ func main() {
 		client.RunClient(*method, *url, *data)
 	case "all":
 		go server.RunServer(*addr, *port)
-		// Ждём немного, чтобы сервер успел запуститься
 		time.Sleep(500 * time.Millisecond)
 		if *url == "" {
 			*url = "http://" + *addr + ":" + strconv.Itoa(*port)
 		}
 		client.RunClient(*method, *url, *data)
+		select {} // Блокируем выполнение, чтобы сервер продолжал работать
 	default:
 		log.Fatal("Неверный режим. Используйте 'server', 'client' или 'all'.")
 	}
