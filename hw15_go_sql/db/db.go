@@ -36,26 +36,23 @@ func InitDB(cfg Config) error {
 	return nil
 }
 
-func ExecTx(txFunc func(*sql.Tx) error) error {
-	tx, err := DB.Begin()
-	if err != nil {
-		return err
-	}
-
-	if err := txFunc(tx); err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("tx err: %w, rollback err: %w", err, rbErr)
-		}
-		return err
-	}
-	return tx.Commit()
+type User struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"-"`
+}
+type Order struct {
+	ID          int     `json:"id"`
+	UserID      int     `json:"user_id"`
+	OrderDate   string  `json:"order_date"`
+	TotalAmount float64 `json:"total_amount"`
 }
 
-type User struct {
-	ID       int
-	Name     string
-	Email    string
-	Password string
+type UserStats struct {
+	UserID          int     `json:"user_id"`
+	TotalSpent      float64 `json:"total_spent"`
+	AvgProductPrice float64 `json:"avg_product_price"`
 }
 
 func GetAllUsers() ([]User, error) {
@@ -74,4 +71,67 @@ func GetAllUsers() ([]User, error) {
 		users = append(users, u)
 	}
 	return users, nil
+}
+
+func GetAllProducts() ([]Product, error) {
+	rows, err := DB.Query("SELECT id, name, price FROM products")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []Product
+	for rows.Next() {
+		var p Product
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+	return products, nil
+}
+
+type Product struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
+func GetOrdersByUser(userID int) ([]Order, error) {
+	rows, err := DB.Query("SELECT id, user_id, order_date, total_amount FROM orders WHERE user_id = $1", userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []Order
+	for rows.Next() {
+		var o Order
+		if err := rows.Scan(&o.ID, &o.UserID, &o.OrderDate, &o.TotalAmount); err != nil {
+			return nil, err
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+func GetUserStats(userID int) (*UserStats, error) {
+
+	query := `
+	SELECT u.id, 
+	       COALESCE(SUM(o.total_amount), 0) AS total_spent,
+	       COALESCE(AVG(p.price), 0) AS avg_product_price
+	FROM users u
+	LEFT JOIN orders o ON u.id = o.user_id
+	LEFT JOIN order_products op ON o.id = op.order_id
+	LEFT JOIN products p ON op.product_id = p.id
+	WHERE u.id = $1
+	GROUP BY u.id;
+	`
+	var stats UserStats
+	err := DB.QueryRow(query, userID).Scan(&stats.UserID, &stats.TotalSpent, &stats.AvgProductPrice)
+	if err != nil {
+		return nil, err
+	}
+	return &stats, nil
 }
