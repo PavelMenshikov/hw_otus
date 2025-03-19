@@ -44,7 +44,7 @@ func ExecTx(txFunc func(*sql.Tx) error) error {
 
 	if err := txFunc(tx); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("tx err: %v, rollback err: %v", err, rbErr)
+			return fmt.Errorf("tx err: %w, rollback err: %w", err, rbErr)
 		}
 		return err
 	}
