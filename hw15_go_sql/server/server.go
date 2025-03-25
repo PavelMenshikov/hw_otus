@@ -18,7 +18,6 @@ func RequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodPost {
-
 		_, err := http.MaxBytesReader(w, r.Body, 1048576).Read(make([]byte, 1024))
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusBadRequest)
