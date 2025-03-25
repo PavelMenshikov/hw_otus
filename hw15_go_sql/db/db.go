@@ -36,23 +36,45 @@ func InitDB(cfg Config) error {
 	return nil
 }
 
+func ExecTx(txFunc func(*sql.Tx) error) error {
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	if err := txFunc(tx); err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("tx err: %w, rollback err: %w", err, rbErr)
+		}
+		return err
+	}
+	return tx.Commit()
+}
+
 type User struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"-"`
 }
+
+type Product struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
 type Order struct {
 	ID          int     `json:"id"`
-	UserID      int     `json:"user_id"`
-	OrderDate   string  `json:"order_date"`
-	TotalAmount float64 `json:"total_amount"`
+	UserID      int     `json:"userId"`
+	OrderDate   string  `json:"orderDate"`
+	TotalAmount float64 `json:"totalAmount"`
 }
 
 type UserStats struct {
-	UserID          int     `json:"user_id"`
-	TotalSpent      float64 `json:"total_spent"`
-	AvgProductPrice float64 `json:"avg_product_price"`
+	UserID          int     `json:"userId"`
+	TotalSpent      float64 `json:"totalSpent"`
+	AvgProductPrice float64 `json:"avgProductPrice"`
 }
 
 func GetAllUsers() ([]User, error) {
@@ -91,12 +113,6 @@ func GetAllProducts() ([]Product, error) {
 	return products, nil
 }
 
-type Product struct {
-	ID    int     `json:"id"`
-	Name  string  `json:"name"`
-	Price float64 `json:"price"`
-}
-
 func GetOrdersByUser(userID int) ([]Order, error) {
 	rows, err := DB.Query("SELECT id, user_id, order_date, total_amount FROM orders WHERE user_id = $1", userID)
 	if err != nil {
@@ -116,7 +132,6 @@ func GetOrdersByUser(userID int) ([]Order, error) {
 }
 
 func GetUserStats(userID int) (*UserStats, error) {
-
 	query := `
 	SELECT u.id, 
 	       COALESCE(SUM(o.total_amount), 0) AS total_spent,

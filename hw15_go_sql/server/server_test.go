@@ -23,6 +23,10 @@ func TestRequestHandler_GET(t *testing.T) {
 	}
 }
 
+func RequestHandler(w *httptest.ResponseRecorder, req *http.Request) {
+	panic("unimplemented")
+}
+
 func TestRequestHandler_POST(t *testing.T) {
 	data := "тестовые данные"
 	req := httptest.NewRequest("POST", "http://localhost/test", strings.NewReader(data))

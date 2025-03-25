@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	addr := flag.String("addr", "localhost", "Адрес сервера")
 	port := flag.Int("port", 8080, "Порт сервера")
 	flag.Parse()
