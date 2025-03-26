@@ -150,3 +150,15 @@ func GetUserStats(userID int) (*UserStats, error) {
 	}
 	return &stats, nil
 }
+
+func CreateUser(u User) (int, error) {
+	var newID int
+	err := DB.QueryRow(
+		"INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id",
+		u.Name, u.Email, u.Password,
+	).Scan(&newID)
+	if err != nil {
+		return 0, err
+	}
+	return newID, nil
+}

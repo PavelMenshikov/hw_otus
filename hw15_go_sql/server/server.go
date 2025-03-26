@@ -2,119 +2,156 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/PavelMenshikov/hw_otus/hw15_go_sql/db"
 )
 
-func RequestHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Received %s request for %s", r.Method, r.URL.Path)
-	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// var users []User
+
+func createUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
-	if r.Method == http.MethodPost {
-		_, err := http.MaxBytesReader(w, r.Body, 1048576).Read(make([]byte, 1024))
-		if err != nil {
-			http.Error(w, "Error reading request body", http.StatusBadRequest)
+
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "Ошибка декодирования JSON", http.StatusBadRequest)
+		return
+	}
+
+	if user.Username == "" || user.Password == "" {
+		http.Error(w, "Имя пользователя и пароль не могут быть пустыми", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.DB.Exec("INSERT INTO users (name, password) VALUES ($1, $2)", user.Username, user.Password)
+	if err != nil {
+		http.Error(w, "Ошибка добавления пользователя", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+func getUsers(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.DB.Query("SELECT id, name, password FROM users")
+	if err != nil {
+		http.Error(w, "Ошибка получения пользователей", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID, &user.Username, &user.Password); err != nil {
+			http.Error(w, "Ошибка обработки данных", http.StatusInternalServerError)
 			return
 		}
+		users = append(users, user)
 	}
-	response := fmt.Sprintf("Hello! You made a %s request to %s", r.Method, r.URL.Path)
-	if _, err := w.Write([]byte(response)); err != nil {
-		log.Printf("Error writing response: %v", err)
-	}
-}
 
-func respondJSON(w http.ResponseWriter, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
+
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		ID int `json:"id"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "Ошибка декодирования JSON", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.DB.Exec("DELETE FROM users WHERE id = $1", req.ID)
+	if err != nil {
+		http.Error(w, "Ошибка удаления пользователя", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		log.Printf("Error encoding JSON: %v", err)
-	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 }
 
-func usersHandler(w http.ResponseWriter, r *http.Request) {
-	users, err := db.GetAllUsers()
-	if err != nil {
-		http.Error(w, "Error getting users", http.StatusInternalServerError)
+func updateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
 		return
 	}
-	respondJSON(w, users)
+
+	var user User
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "Ошибка декодирования JSON", http.StatusBadRequest)
+		return
+	}
+
+	_, err = db.DB.Exec("UPDATE users SET password = $1 WHERE id = $2", user.Password, user.ID)
+	if err != nil {
+		http.Error(w, "Ошибка обновления пользователя", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
 
-func productsHandler(w http.ResponseWriter, r *http.Request) {
-	products, err := db.GetAllProducts()
-	if err != nil {
-		http.Error(w, "Error getting products", http.StatusInternalServerError)
-		return
-	}
-	respondJSON(w, products)
+func SetupRoutes() {
+	http.HandleFunc("/users", getUsers)
+	http.HandleFunc("/users/create", createUser)
+	http.HandleFunc("/users/delete", deleteUser)
 }
 
-func ordersHandler(w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.URL.Query().Get("user_id")
-	if userIDStr == "" {
-		http.Error(w, "user_id parameter is required", http.StatusBadRequest)
-		return
-	}
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(w, "Invalid user_id", http.StatusBadRequest)
-		return
-	}
-	orders, err := db.GetOrdersByUser(userID)
-	if err != nil {
-		http.Error(w, "Error getting orders", http.StatusInternalServerError)
-		return
-	}
-	respondJSON(w, orders)
-}
+func enableCORS(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-func statsHandler(w http.ResponseWriter, r *http.Request) {
-	userIDStr := r.URL.Query().Get("user_id")
-	if userIDStr == "" {
-		http.Error(w, "user_id parameter is required", http.StatusBadRequest)
-		return
-	}
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		http.Error(w, "Invalid user_id", http.StatusBadRequest)
-		return
-	}
-	stats, err := db.GetUserStats(userID)
-	if err != nil {
-		http.Error(w, "Error getting user stats", http.StatusInternalServerError)
-		return
-	}
-	respondJSON(w, stats)
-}
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
-func RunServer(addr string, port int) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/users", usersHandler)
-	mux.HandleFunc("/products", productsHandler)
-	mux.HandleFunc("/orders", ordersHandler)
-	mux.HandleFunc("/stats", statsHandler)
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Online shop server is running"))
+		h.ServeHTTP(w, r)
 	})
+}
 
-	serverAddr := addr + ":" + strconv.Itoa(port)
+func RunServer(addr string) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/users", getUsers)
+	mux.HandleFunc("/users/create", createUser)
+	mux.HandleFunc("/users/delete", deleteUser)
+	mux.HandleFunc("/users/update", updateUser)
+
+	log.Printf("Server is running on %s", addr)
 	srv := &http.Server{
-		Addr:         serverAddr,
-		Handler:      mux,
-		ReadTimeout:  10 * time.Second,
+		Addr:         addr,
+		Handler:      enableCORS(mux),
+		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  30 * time.Second,
+		IdleTimeout:  15 * time.Second,
 	}
 
-	log.Printf("Server is running on %s", serverAddr)
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalf("Server error: %v", err)
-	}
+	log.Fatal(srv.ListenAndServe())
 }

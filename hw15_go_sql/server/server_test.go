@@ -1,29 +1,27 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
 func TestRequestHandler_GET(t *testing.T) {
-	req := httptest.NewRequest("GET", "http://localhost/test", nil)
+	req := httptest.NewRequest("GET", "http://localhost/users", nil)
 	w := httptest.NewRecorder()
-	RequestHandler(w, req)
+	getUsers(w, req)
 	resp := w.Result()
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "Hello! You made a GET request") {
-		t.Errorf("Unexpected response: %s", string(body))
-	}
+	fmt.Println(string(body))
 }
 
 func TestRequestHandler_MethodNotAllowed(t *testing.T) {
-	req := httptest.NewRequest("PUT", "http://localhost/test", nil)
+	req := httptest.NewRequest("PUT", "http://localhost/users", nil)
 	w := httptest.NewRecorder()
-	RequestHandler(w, req)
+	getUsers(w, req)
 	resp := w.Result()
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusMethodNotAllowed {

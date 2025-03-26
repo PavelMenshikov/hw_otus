@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/PavelMenshikov/hw_otus/hw15_go_sql/db"
@@ -25,5 +26,6 @@ func main() {
 		log.Fatalf("Ошибка инициализации БД: %v", err)
 	}
 
-	server.RunServer(*addr, *port)
+	log.Printf("Сервер запущен на %s:%d", *addr, *port)
+	server.RunServer(fmt.Sprintf("%s:%d", *addr, *port))
 }
