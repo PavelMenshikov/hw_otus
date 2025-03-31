@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -154,4 +155,5 @@ func RunServer(addr string) {
 	}
 
 	log.Fatal(srv.ListenAndServe())
+	fmt.Println("Домашка")
 }
