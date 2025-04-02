@@ -9,10 +9,9 @@ import (
 )
 
 func main() {
-	// Инициализация базы данных
+
 	config.InitDB()
 
-	// Настройка Telegram-бота
 	bot, err := tgbotapi.NewBotAPI(config.BotToken)
 	if err != nil {
 		log.Panicf("Ошибка подключения к Telegram API: %v", err)
@@ -23,7 +22,7 @@ func main() {
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
-	u.AllowedUpdates = []string{"message", "callback_query"} // Добавляем обработку CallbackQuery
+	u.AllowedUpdates = []string{"message", "callback_query"}
 	updates := bot.GetUpdatesChan(u)
 
 	// Все вопросы по порядку
@@ -65,7 +64,6 @@ func main() {
 		"И последнее… Посчитай, сколько у тебя уходит денег в месяц на жизнь – коммунальные расходы, повседневные траты и питание. И умножь эту цифру нв 12. Запиши ниже годовой жизненный расход.",
 	}
 
-	// Обработка входящих сообщений
 	for update := range updates {
 		log.Printf("Full Update: %+v", update)
 		handleMessage(bot, update, questions)
@@ -73,7 +71,6 @@ func main() {
 
 }
 
-// Обработка сообщений пользователя
 func handleMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update, questions []string) {
 	if update.Message != nil && update.Message.IsCommand() && update.Message.Command() == "start" {
 		handleStartCommand(bot, update)
@@ -90,15 +87,12 @@ func handleMessage(bot *tgbotapi.BotAPI, update tgbotapi.Update, questions []str
 	}
 }
 
-// Обработка команды /start
 func handleStartCommand(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	chatID := update.Message.Chat.ID
 	userName := update.Message.From.FirstName
 
-	// Сброс данных пользователя
 	config.DB.Delete(&config.UserAnswer{}, "user_id = ?", update.Message.From.ID)
 
-	// Первое сообщение с первой кнопкой
 	msg := tgbotapi.NewMessage(chatID, fmt.Sprintf(
 		"Привет, <b>%s</b>! 👋\n\nДавай начнем планирование 2025 года! 📅\n\nЯ буду задавать по очереди вопросы, а ты пиши нужные тебе суммы или «0», если тебе эта статья не подходит. 💬\n\nДоговорились? Нажми «Да», если согласен, и мы приступим! 😊",
 		userName,
@@ -128,7 +122,6 @@ func handleCallbackQuery(bot *tgbotapi.BotAPI, update tgbotapi.Update, questions
 		askQuestion(bot, chatID, userID, questions, 25) // Переходим к первому негативному вопросу
 	}
 
-	// Подтверждение обработки
 	callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "")
 	if _, err := bot.Request(callback); err != nil {
 		log.Printf("Ошибка при подтверждении CallbackQuery: %v", err)
@@ -160,13 +153,11 @@ func startQuestions(bot *tgbotapi.BotAPI, chatID int64, userID int64, questions 
 	askQuestion(bot, chatID, userID, questions, 0)
 }
 
-// Обработка текстовых ответов
 func handleTextResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, questions []string) {
 	userID := update.Message.From.ID
 	chatID := update.Message.Chat.ID
 	userText := update.Message.Text
 
-	// Игнорируем ввод "Да" как текст (это часть интерфейса, а не ответ)
 	if userText == "Да" {
 		return
 	}
@@ -178,10 +169,9 @@ func handleTextResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, questions 
 		return
 	}
 
-	// Сохранение ответа
 	if err := config.CreateOrUpdateUserAnswer(userID, questions[step], update.Message.Text, step, step >= len(questions)/2); err != nil {
 		log.Printf("Ошибка сохранения ответа: %v", err)
-		bot.Send(tgbotapi.NewMessage(chatID, "Произошла ошибка при сохранении ответа. Попробуй снова."))
+		bot.Send(tgbotapi.NewMessage(chatID, "Произошла ошибка. Чтобы расчет был правильным, введи только цифру без пробелов и букв. Если инструмент тебе не подходит - поставь 0 (ноль)."))
 		return
 	}
 
@@ -189,7 +179,6 @@ func handleTextResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, questions 
 	askQuestion(bot, chatID, userID, questions, step+1)
 }
 
-// Получение текущего шага из базы данных
 func getCurrentStep(userID int64) int {
 	var userAnswer config.UserAnswer
 	err := config.DB.Where("user_id = ?", userID).Order("step DESC").First(&userAnswer).Error
@@ -212,7 +201,7 @@ func askQuestion(bot *tgbotapi.BotAPI, chatID int64, userID int64, questions []s
 	if step < len(questions) {
 		msg := tgbotapi.NewMessage(chatID, questions[step])
 		bot.Send(msg)
-		step++ // Увеличиваем шаг для следующего вопроса
+		step++
 	} else {
 		totalAnnual, avgMonthly := config.CalculateFinalSummary(userID)
 		msg := tgbotapi.NewMessage(chatID, config.FinalSummary(totalAnnual, avgMonthly))

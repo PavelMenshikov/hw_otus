@@ -3,20 +3,18 @@ package handlers
 import (
 	"fmt"
 	"log"
-	"planner2/config"
-	"planner2/texts"
+	"planner2-копия/config"
+	"planner2-копия/texts"
 	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-// Обработка команды /start
 func HandleStartCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	userID := message.From.ID
 	userName := message.From.FirstName
 
-	// Удаляем старые ответы пользователя
 	config.DB.Delete(&config.UserAnswer{}, "user_id = ?", userID)
 
 	msg := tgbotapi.NewMessage(message.Chat.ID, fmt.Sprintf(
@@ -29,7 +27,6 @@ func HandleStartCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	askNextQuestion(bot, message.Chat.ID, userID, false, 0)
 }
 
-// Задаём следующий вопрос
 func askNextQuestion(bot *tgbotapi.BotAPI, chatID int64, userID int64, isNegative bool, step int) {
 	var questions map[string]string
 	if isNegative {
@@ -38,13 +35,11 @@ func askNextQuestion(bot *tgbotapi.BotAPI, chatID int64, userID int64, isNegativ
 		questions = texts.PositiveButtons
 	}
 
-	// Преобразуем ключи в слайс для последовательной обработки
 	keys := make([]string, 0, len(questions))
 	for k := range questions {
 		keys = append(keys, k)
 	}
 
-	// Проверка завершения блока вопросов
 	if step >= len(keys) {
 		if isNegative {
 			handleCombinedSummary(bot, chatID, userID)
@@ -62,7 +57,6 @@ func askNextQuestion(bot *tgbotapi.BotAPI, chatID int64, userID int64, isNegativ
 	msg := tgbotapi.NewMessage(chatID, currentText)
 	bot.Send(msg)
 
-	// Сохранение шага
 	err := config.CreateOrUpdateUserAnswer(userID, currentQuestion, 0, step, isNegative)
 	if err != nil {
 		log.Printf("Ошибка сохранения шага: %v", err)
@@ -71,11 +65,9 @@ func askNextQuestion(bot *tgbotapi.BotAPI, chatID int64, userID int64, isNegativ
 	}
 }
 
-// Обработка текстового ввода пользователя
 func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 	userID := message.From.ID
 
-	// Проверка, является ли сообщение командой
 	if message.IsCommand() {
 		switch message.Command() {
 		case "start":
@@ -84,10 +76,9 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 			msg := tgbotapi.NewMessage(message.Chat.ID, "Неизвестная команда. Попробуйте ещё раз.")
 			bot.Send(msg)
 		}
-		return // Выходим, чтобы не продолжать обработку как текст
+		return
 	}
 
-	// Попытка обработать текст как число
 	amount, err := strconv.ParseFloat(message.Text, 64)
 	if err != nil || amount < 0 {
 		msg := tgbotapi.NewMessage(message.Chat.ID, "Пожалуйста, введите корректное число.")
@@ -95,7 +86,6 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		return
 	}
 
-	// Получение текущего вопроса из базы данных
 	userAnswer, err := config.GetCurrentStep(userID)
 	if err != nil {
 		log.Printf("Ошибка получения текущего шага: %v", err)
@@ -104,7 +94,6 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		return
 	}
 
-	// Сохранение ответа пользователя
 	userAnswer.Answer = amount
 	if err := config.DB.Save(&userAnswer).Error; err != nil {
 		log.Printf("Ошибка сохранения ответа: %v", err)
@@ -113,15 +102,12 @@ func HandleMessage(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
 		return
 	}
 
-	// Ответ на сообщение
 	msg := tgbotapi.NewMessage(message.Chat.ID, "Ваш ответ сохранён!")
 	bot.Send(msg)
 
-	// Задаём следующий вопрос
 	askNextQuestion(bot, message.Chat.ID, userID, userAnswer.IsNegative, userAnswer.Step+1)
 }
 
-// Итоговый анализ
 func handleCombinedSummary(bot *tgbotapi.BotAPI, chatID int64, userID int64) {
 	var answers []config.UserAnswer
 	config.DB.Where("user_id = ?", userID).Find(&answers)
@@ -142,7 +128,6 @@ func handleCombinedSummary(bot *tgbotapi.BotAPI, chatID int64, userID int64) {
 	bot.Send(msg)
 }
 
-// Итоговый отчёт
 func generateFinalSummary(answers []config.UserAnswer, isNegative bool) string {
 	var details []string
 	var total float64
@@ -166,7 +151,6 @@ func generateFinalSummary(answers []config.UserAnswer, isNegative bool) string {
 	)
 }
 
-// Подсчёт общих расходов
 func calculateTotalExpenses(answers []config.UserAnswer) (float64, float64) {
 	var total float64
 	for _, answer := range answers {

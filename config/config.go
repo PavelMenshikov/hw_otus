@@ -4,40 +4,35 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/glebarez/sqlite"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 var (
-	BotToken = "7257094557:AAGy7dKJ3Oz0boJXPwSkxh2TwhmbbS4SiD4"
-	DB       *gorm.DB
+	DB *gorm.DB
 )
 
-var PositiveQuestions = []string{
-	"💰 Чтобы чувствовать себя уверенно на волнах экономических кризисов...",
-	"📈 Прекрасно, что ты выбрал акции как инструмент...",
-	"📊 На данном этапе облигации отличный инструмент...",
-}
+var BotToken string
 
-var NegativeQuestions = []string{
-	"💼 Сколько вы тратите на нелюбимую работу?",
-	"😟 Тревога о финансах – это сигнал к действию...",
-	"💸 Долги – их надо отдавать. Напиши сумму своей долговой нагрузки...",
-}
-var Questions = map[string]string{
-	// Позитивные вопросы с текстами
-	"Финансовую подушку": "💰 Чтобы чувствовать себя уверенно на волнах экономических кризисов...",
-	// Добавьте оставшиеся позитивные тексты...
-	// Негативные вопросы с текстами
-	"Тревогу о финансах": "😟 Тревога о финансах – это сигнал к действию...",
-	// Добавьте оставшиеся негативные тексты...
+func InitConfig() {
+
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Ошибка загрузки .env файла: %v", err)
+	}
+
+	BotToken = os.Getenv("BOT_TOKEN")
+	if BotToken == "" {
+		log.Fatal("BOT_TOKEN не установлен в переменных окружения")
+	}
 }
 
 func MigrateDB() {
-	DB.AutoMigrate(&UserStep{}, &UserAnswer{}) // Добавьте другие структуры, если нужно
+	DB.AutoMigrate(&UserStep{}, &UserAnswer{})
 }
 
 func FinalSummary(totalAnnual, avgMonthly float64) string {
@@ -76,8 +71,8 @@ func InitDB() {
 	if err != nil {
 		log.Fatal("Ошибка подключения к базе данных:", err)
 	}
+	DB = DB.Session(&gorm.Session{PrepareStmt: true})
 
-	// Миграции
 	err = DB.AutoMigrate(&UserAnswer{}, &FinalCalculation{}, &UserStep{})
 	if err != nil {
 		log.Fatal("Ошибка миграции базы данных:", err)
@@ -105,7 +100,6 @@ type FinalCalculation struct {
 	AverageMonthlyExpenses float64 `gorm:"not null"`
 }
 
-// Создание или обновление ответа пользователя
 func CreateOrUpdateUserAnswer(userID int64, question string, answer string, step int, isNegative bool) error {
 	answerValue, err := strconv.ParseFloat(answer, 64)
 	if err != nil {
@@ -131,10 +125,13 @@ func CreateOrUpdateUserAnswer(userID int64, question string, answer string, step
 	userAnswer.IsNegative = isNegative
 	return DB.Save(&userAnswer).Error
 }
-
-// Вычисление итогового результата
+func GetCurrentStep(userID int64) (UserAnswer, error) {
+	var answer UserAnswer
+	result := DB.Where("user_id = ?", userID).Order("step DESC").First(&answer)
+	return answer, result.Error
+}
 func CalculateFinalSummary(userID int64) (float64, float64) {
-	// Получаем все ответы пользователя
+
 	var answers []UserAnswer
 	err := DB.Where("user_id = ?", userID).Find(&answers).Error
 	if err != nil {
@@ -145,10 +142,8 @@ func CalculateFinalSummary(userID int64) (float64, float64) {
 	var totalAnnual float64
 	var economicAnswer float64
 
-	// Номер шага для вопроса "Экономить на всём не нужно"
-	const EconomicQuestionStep = 30 // Указываем точный шаг для вопроса
+	const EconomicQuestionStep = 30
 
-	// Суммируем все ответы и находим ответ для экономии
 	for _, answer := range answers {
 		totalAnnual += answer.Answer
 		if answer.Step == EconomicQuestionStep {
@@ -156,13 +151,10 @@ func CalculateFinalSummary(userID int64) (float64, float64) {
 		}
 	}
 
-	// Вычитаем ответ на вопрос об экономии, умноженный на 2
 	totalAnnual -= economicAnswer * 2
 
-	// Вычисляем среднемесячную сумму
 	avgMonthly := totalAnnual / 12
 
-	// Логируем ключевые данные
 	log.Printf("Итоговая сумма перед вычитанием: %.2f", totalAnnual+economicAnswer*2)
 	log.Printf("Ответ для экономии: %.2f, вычитается: %.2f", economicAnswer, economicAnswer*2)
 	log.Printf("Итоговая сумма после вычитания: %.2f", totalAnnual)
