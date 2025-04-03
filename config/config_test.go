@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,4 +35,10 @@ func TestCreateOrUpdateUserAnswer(t *testing.T) {
 	var answer UserAnswer
 	DB.Where("user_id = ? AND question = ?", userID, "Test question").First(&answer)
 	assert.Equal(t, 150.0, answer.Answer)
+}
+func TestMain(m *testing.M) {
+	config.InitConfig()
+	config.InitDB()
+	exitVal := m.Run()
+	os.Exit(exitVal)
 }

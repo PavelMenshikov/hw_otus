@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"planner2-копия/config"
+	"planner2/config"
 	"testing"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,10 +19,8 @@ func (m *MockBot) Send(c tgbotapi.Chattable) (tgbotapi.Message, error) {
 }
 
 func TestHandleStartCommand(t *testing.T) {
-	config.InitDB()
+	config.InitDB() // Добавляем инициализацию БД
 	mockBot := new(MockBot)
-
-	mockBot.On("Send", mock.Anything).Return(tgbotapi.Message{}, nil)
 
 	update := tgbotapi.Update{
 		Message: &tgbotapi.Message{
@@ -30,7 +29,9 @@ func TestHandleStartCommand(t *testing.T) {
 		},
 	}
 
-	HandleStartCommand(mockBot, update)
+	mockBot.On("Send", mock.AnythingOfType("*tgbotapi.MessageConfig")).Return(tgbotapi.Message{}, nil)
+
+	HandleStartCommand(mockBot, update.Message) // Исправлен вызов функции
 
 	var user config.UserAnswer
 	config.DB.Where("user_id = ?", 123).First(&user)
@@ -54,8 +55,8 @@ func TestHandleMessage(t *testing.T) {
 		},
 	}
 
-	mockBot.On("Send", mock.Anything).Return(tgbotapi.Message{}, nil)
-	HandleMessage(mockBot, update)
+	mockBot.On("Send", mock.AnythingOfType("*tgbotapi.MessageConfig")).Return(tgbotapi.Message{}, nil)
+	HandleMessage(mockBot, update.Message) // Исправлен вызов функции
 
 	var answer config.UserAnswer
 	config.DB.Where("user_id = ? AND step = ?", 456, 10).First(&answer)

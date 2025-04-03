@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: financial_planner
+    ports:
+      - "8080:8080"
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    command: ["./financial_planner"]
+
+  db:
+    image: nouchka/sqlite3:latest
+    container_name: sqlite_db
+    volumes:
+      - financial_planner_data:/var/lib/sqlite3
+    environment:
+      - SQLITE_DATABASE=financial_planner.db
+
+volumes:
+  financial_planner_data:
