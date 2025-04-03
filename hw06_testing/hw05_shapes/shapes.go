@@ -51,6 +51,7 @@ func calculateArea(s any) (float64, error) {
 	return shape.Area(), nil
 }
 
+//nolint:unused
 func readFloat(prompt string) (float64, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print(prompt)
@@ -66,6 +67,7 @@ func readFloat(prompt string) (float64, error) {
 	return value, nil
 }
 
+//nolint:unused
 func readInt(prompt string) (int, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print(prompt)

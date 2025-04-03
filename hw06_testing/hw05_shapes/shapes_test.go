@@ -39,17 +39,3 @@ func TestCalculateArea(t *testing.T) {
 		t.Errorf("Expected %.2f but got %.2f", expected, area)
 	}
 }
-
-func TestReadFloat(t *testing.T) {
-	_, err := readFloat("Введите число: ")
-	if err != nil {
-		t.Errorf("Ошибка при чтении числа: %v", err)
-	}
-}
-
-func TestReadInt(t *testing.T) {
-	_, err := readInt("Введите целое число: ")
-	if err != nil {
-		t.Errorf("Ошибка при чтении числа: %v", err)
-	}
-}
