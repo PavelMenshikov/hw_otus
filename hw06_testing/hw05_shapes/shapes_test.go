@@ -39,7 +39,3 @@ func TestCalculateArea(t *testing.T) {
 		t.Errorf("Expected %.2f but got %.2f", expected, area)
 	}
 }
-
-func CalculateArea(r Rectangle) (any, any) {
-	panic("unimplemented")
-}

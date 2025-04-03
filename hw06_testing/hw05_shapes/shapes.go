@@ -39,6 +39,10 @@ func (t Triangle) Area() float64 {
 	return 0.5 * t.Base * t.Height
 }
 
+func CalculateArea(s Shape) (float64, error) {
+	return calculateArea(s)
+}
+
 func calculateArea(s any) (float64, error) {
 	shape, ok := s.(Shape)
 	if !ok {
