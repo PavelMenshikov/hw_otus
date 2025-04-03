@@ -3,8 +3,8 @@ package comparator_test
 import (
 	"testing"
 
-	comparator "github.com/PavelMenshikov/hw_otus/06_testing/hw04/testing_comparator"
 	book "github.com/PavelMenshikov/hw_otus/hw06_testing/hw04_struct_comparator/testing_book"
+	comparator "github.com/PavelMenshikov/hw_otus/hw06_testing/hw04_struct_comparator/testing_comparator"
 	"github.com/stretchr/testify/assert"
 )
 
