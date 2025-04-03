@@ -9,7 +9,6 @@ import (
 )
 
 func TestComparator(t *testing.T) {
-
 	bookOne := book.NewBook(1, "Book One", "Author One", 2020, 300, 4.0)
 	bookTwo := book.NewBook(2, "Book Two", "Author Two", 2021, 350, 4.5)
 

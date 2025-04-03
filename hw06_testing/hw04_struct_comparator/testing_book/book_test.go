@@ -8,7 +8,6 @@ import (
 )
 
 func TestBookMethods(t *testing.T) {
-
 	newBook := book.NewBook(1, "Go Programming", "John Doe", 2020, 350, 4.5)
 
 	assert.Equal(t, 1, newBook.ID(), "ID должен быть 1")

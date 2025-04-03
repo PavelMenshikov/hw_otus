@@ -81,6 +81,7 @@ func readInt(prompt string) (int, error) {
 	return value, nil
 }
 
+//nolint:unused
 func main() {
 	for {
 		fmt.Println("\nВыберите фигуру для вычисления площади:")
